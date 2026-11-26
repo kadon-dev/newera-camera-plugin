@@ -1,0 +1,6 @@
+{
+  "name": "camera-control",
+  "title": "Camera Control",
+  "description": "Open the standalone Camera Control window to adjust X/Y/Z, storey eye-level presets, 2D floor-plan aim, yaw/pitch/FOV, and saved viewpoints.",
+  "command": ["./launch.sh"]
+}

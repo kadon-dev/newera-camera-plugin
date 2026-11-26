@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- MANDATORY: Declare support for both light and dark themes -->
+  <meta name="color-scheme" content="light dark">
+  <title>Newera Camera Control</title>
+  <style>
+    :root {
+      --bg-light: #f4f6f9;
+      --bg-dark: #11151c;
+      --surface-light: #ffffff;
+      --surface-dark: #1a202c;
+      --surface-muted-light: #edf1f7;
+      --surface-muted-dark: #232b38;
+      --border-light: #d2dbe6;
+      --border-dark: #313b4e;
+      --text-light: #0f172a;
+      --text-dark: #f1f5f9;
+      --muted-light: #475569;
+      --muted-dark: #94a3b8;
+      --accent-light: #0369a1;
+      --accent-dark: #38bdf8;
+      --accent-fg-light: #ffffff;
+      --accent-fg-dark: #082f49;
+      --danger-light: #b91c1c;
+      --danger-dark: #f87171;
+      --success-light: #15803d;
+      --success-dark: #4ade80;
+      --scroll-thumb-light: #64748b;
+      --scroll-thumb-dark: #94a3b8;
+      --scroll-track-light: #e2e8f0;
+      --scroll-track-dark: #1e293b;
+
+      --bg: var(--bg-light);
+      --surface: var(--surface-light);
+      --surface-muted: var(--surface-muted-light);
+      --border: var(--border-light);
+      --text: var(--text-light);
+      --muted: var(--muted-light);
+      --accent: var(--accent-light);
+      --accent-fg: var(--accent-fg-light);
+      --danger: var(--danger-light);
+      --success: var(--success-light);
+      --scroll-thumb: var(--scroll-thumb-light);
+      --scroll-track: var(--scroll-track-light);
+
+      @media (prefers-color-scheme: dark) {
+        --bg: var(--bg-dark);
+        --surface: var(--surface-dark);
+        --surface-muted: var(--surface-muted-dark);
+        --border: var(--border-dark);
+        --text: var(--text-dark);
+        --muted: var(--muted-dark);
+        --accent: var(--accent-dark);
+        --accent-fg: var(--accent-fg-dark);
+        --danger: var(--danger-dark);
+        --success: var(--success-dark);
+        --scroll-thumb: var(--scroll-thumb-dark);
+        --scroll-track: var(--scroll-track-dark);
+      }
+
+      @supports (color: light-dark(white, black)) {
+        --bg: light-dark(var(--bg-light), var(--bg-dark));
+        --surface: light-dark(var(--surface-light), var(--surface-dark));
+        --surface-muted: light-dark(var(--surface-muted-light), var(--surface-muted-dark));
+        --border: light-dark(var(--border-light), var(--border-dark));
+        --text: light-dark(var(--text-light), var(--text-dark));
+        --muted: light-dark(var(--muted-light), var(--muted-dark));
+        --accent: light-dark(var(--accent-light), var(--accent-dark));
+        --accent-fg: light-dark(var(--accent-fg-light), var(--accent-fg-dark));
+        --danger: light-dark(var(--danger-light), var(--danger-dark));
+        --success: light-dark(var(--success-light), var(--success-dark));
+        --scroll-thumb: light-dark(var(--scroll-thumb-light), var(--scroll-thumb-dark));
+        --scroll-track: light-dark(var(--scroll-track-light), var(--scroll-track-dark));
+      }
+
+      color-scheme: light dark;
+      accent-color: var(--accent);
+      scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+    }
+
+    @supports not (scrollbar-color: auto) {
+      :root,
+      .cam-list {
+        scrollbar-width: auto;
+      }
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--scroll-thumb);
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--scroll-track);
+      }
+    }
+
+    @supports not (accent-color: auto) {
+      input[type="checkbox"].visually-hidden {
+        position: absolute !important;
+        clip-path: inset(50%) !important;
+        overflow: hidden !important;
+        width: 1px !important;
+        height: 1px !important;
+        margin: -1px !important;
+        padding: 0 !important;
+        border: 0 !important;
+        white-space: nowrap !important;
+      }
+
+      .chk-label {
+        position: relative;
+        padding-left: 1.5rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      input[type="checkbox"].visually-hidden + span::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid var(--border);
+        background: var(--surface);
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      input[type="checkbox"].visually-hidden:focus-visible + span::before {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      input[type="checkbox"].visually-hidden:checked + span::before {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+
+      input[type="checkbox"].visually-hidden:checked + span::after {
+        content: "✓";
+        position: absolute;
+        left: 0.2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--accent-fg);
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 7px;
+        background: linear-gradient(to right, var(--accent) var(--progress, 50%), var(--border) var(--progress, 50%));
+        border-radius: 4px;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 15px;
+        width: 15px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+        margin-top: -4px;
+      }
+
+      input[type="range"]::-moz-range-track {
+        width: 100%;
+        height: 7px;
+        background: var(--border);
+        border-radius: 4px;
+      }
+
+      input[type="range"]::-moz-range-progress {
+        background-color: var(--accent);
+        height: 7px;
+        border-radius: 4px;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        height: 15px;
+        width: 15px;
+        border-radius: 50%;
+        background: var(--accent);
+        cursor: pointer;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 10px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app {
+      max-width: 540px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 650;
+      margin: 0;
+      line-height: 1.25;
+    }
+
+    h2 {
+      font-size: 11px;
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin: 0 0 8px 0;
+    }
+
+    .subline {
+      font-size: 11px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 550;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .dot.busy {
+      background: var(--accent);
+    }
+
+    .dot.error {
+      background: var(--danger);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    button {
+      font: inherit;
+      font-size: 12px;
+      font-weight: 550;
+      padding: 5px 9px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    button:hover:not(:disabled) {
+      border-color: var(--accent);
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: var(--accent-fg);
+      border-color: var(--accent);
+    }
+
+    button.active {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 1px var(--accent);
+    }
+
+    button.danger {
+      color: var(--danger);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .slider-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: 102px 1fr 72px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-row label {
+      font-size: 12px;
+      font-weight: 550;
+      color: var(--text);
+    }
+
+    .control-row label small {
+      display: block;
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    input[type="number"],
+    input[type="text"] {
+      font: inherit;
+      font-size: 12px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      width: 100%;
+    }
+
+    input:not(input[type="range"]):user-invalid {
+      border-color: var(--danger);
+    }
+
+    canvas#planMap {
+      width: 100%;
+      height: 195px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+      cursor: crosshair;
+      touch-action: none;
+      user-select: none;
+      display: block;
+      margin-top: 8px;
+    }
+
+    .nudge-row {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .cam-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 190px;
+      overflow-y: auto;
+    }
+
+    .cam-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--surface-muted);
+    }
+
+    .cam-item.selected {
+      border-color: var(--accent);
+    }
+
+    .cam-info {
+      min-width: 0;
+      flex: 1;
+      cursor: pointer;
+    }
+
+    .cam-name {
+      font-weight: 600;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cam-coords {
+      font-size: 11px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .save-bar {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .viewport-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: var(--surface-muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .viewport-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    .error-banner {
+      margin-top: 8px;
+      padding: 7px 9px;
+      border-radius: 7px;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      font-size: 12px;
+      display: none;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 6px 0 0 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <div class="header-bar">
+        <div>
+          <h1 id="projectTitle">Newera Camera Control</h1>
+          <div id="coordReadout" class="subline">X 0 · Y 0 · Z 165 cm | Yaw 0° · Pitch 0°</div>
+        </div>
+        <div class="status-pill" role="status" aria-live="polite">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">Connecting…</span>
+        </div>
+      </div>
+
+      <div id="errorBanner" class="error-banner" role="alert"></div>
+
+      <div class="toolbar">
+        <button type="button" id="btnModeVisitor" class="active">Visitor Mode</button>
+        <button type="button" id="btnModeAerial">Aerial Orbit</button>
+        <button type="button" id="btnRefresh" style="margin-left:auto;">Sync</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Storey &amp; Eye-Level Presets</h2>
+      <div id="levelChips" class="chip-row"></div>
+      <div class="chip-row" style="margin-top: 8px;">
+        <button type="button" data-eye="115">Seated (115 cm)</button>
+        <button type="button" data-eye="165" class="active" id="btnEyeStanding">Standing (165 cm)</button>
+        <button type="button" data-eye="220">High (220 cm)</button>
+      </div>
+      <div class="control-row" style="margin-top: 8px;">
+        <label for="numEyeOffset">Eye Above Floor<small>cm offset</small></label>
+        <input type="range" id="rngEyeOffset" min="20" max="330" step="5" value="165" />
+        <input type="number" id="numEyeOffset" min="10" max="500" step="5" value="165" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="header-bar">
+        <h2 style="margin:0;">2D Floor-Plan Position &amp; Aim</h2>
+        <div style="display:flex;gap:4px;">
+          <button type="button" id="btnMapMove" class="active">Move Eye</button>
+          <button type="button" id="btnMapAim">Aim Target</button>
+        </div>
+      </div>
+      <canvas id="planMap" width="520" height="195" aria-label="Interactive 2D floor plan camera map"></canvas>
+      <p class="hint">Click/drag to move or aim (hold <strong>Shift</strong> to aim). Click a blue pin to jump to a saved floor viewpoint.</p>
+    </div>
+
+    <div class="card">
+      <h2>Position, Elevation &amp; Lens</h2>
+      <div class="slider-grid">
+        <div class="control-row">
+          <label for="numX">Position X<small id="lblMetersX">0.00 m</small></label>
+          <input type="range" id="rngX" min="-200" max="950" step="5" value="375" />
+          <input type="number" id="numX" step="5" value="375" />
+        </div>
+        <div class="control-row">
+          <label for="numY">Position Y<small id="lblMetersY">0.00 m</small></label>
+          <input type="range" id="rngY" min="-200" max="550" step="5" value="175" />
+          <input type="number" id="numY" step="5" value="175" />
+        </div>
+        <div class="control-row">
+          <label for="numZ">Elevation Z<small id="lblMetersZ">+1.65 m</small></label>
+          <input type="range" id="rngZ" min="0" max="1050" step="5" value="165" />
+          <input type="number" id="numZ" step="5" value="165" />
+        </div>
+        <div class="control-row">
+          <label for="numYaw">Yaw (Compass)<small id="lblCompass">S</small></label>
+          <input type="range" id="rngYaw" min="-180" max="180" step="1" value="0" />
+          <input type="number" id="numYaw" min="-180" max="180" step="1" value="0" />
+        </div>
+        <div class="control-row">
+          <label for="numPitch">Pitch (Tilt)<small>+ down / − up</small></label>
+          <input type="range" id="rngPitch" min="-65" max="65" step="1" value="0" />
+          <input type="number" id="numPitch" min="-85" max="85" step="1" value="0" />
+        </div>
+        <div class="control-row">
+          <label for="numFov">Field of View<small>degrees</small></label>
+          <input type="range" id="rngFov" min="35" max="110" step="1" value="75" />
+          <input type="number" id="numFov" min="25" max="120" step="1" value="75" />
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button type="button" data-yaw="180">N</button>
+        <button type="button" data-yaw="-90">E</button>
+        <button type="button" data-yaw="0">S</button>
+        <button type="button" data-yaw="90">W</button>
+        <button type="button" id="btnLevelHorizon">Level (0°)</button>
+      </div>
+
+      <div class="nudge-row">
+        <button type="button" id="nudgeFwd" title="Walk forward 35 cm (W)">Fwd</button>
+        <button type="button" id="nudgeBack" title="Step back 35 cm (S)">Back</button>
+        <button type="button" id="nudgeLeft" title="Strafe left 35 cm (A)">Left</button>
+        <button type="button" id="nudgeRight" title="Strafe right 35 cm (D)">Right</button>
+        <button type="button" id="nudgeUp" title="Raise Z +25 cm (R)">Z +25</button>
+        <button type="button" id="nudgeDown" title="Lower Z -25 cm (F)">Z −25</button>
+      </div>
+      <p class="hint">Keys: <strong>W/S</strong> walk · <strong>A/D</strong> strafe · <strong>Q/E</strong> turn ±10° · <strong>R/F</strong> Z ±15 cm</p>
+    </div>
+
+    <div class="card">
+      <h2>Saved Camera Viewpoints</h2>
+      <div id="camList" class="cam-list"></div>
+      <div class="save-bar">
+        <input type="text" id="inpSaveName" placeholder="New viewpoint name…" />
+        <button type="button" id="btnSaveNew" class="primary" style="white-space:nowrap;">Save New View</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <details id="previewDetails">
+        <summary>Optional Snapshot &amp; Daylight Photo Preview</summary>
+        <div class="toolbar">
+          <button type="button" id="btnSnapshot">3D Snapshot</button>
+          <button type="button" id="btnPhoto" class="primary">Render Daylight Photo</button>
+        </div>
+        <div class="viewport-box">
+          <img id="previewImg" alt="Newera camera render preview" style="display:none;" />
+          <span id="previewEmpty" class="hint">Live updates show directly in Newera's 3D window.</span>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      x: 700,
+      y: 185,
+      z: 165,
+      yaw: 88,
+      pitch: 2,
+      fov: 75,
+      eyeOffset: 165,
+      levels: [],
+      activeLevelId: null,
+      bounds: [[0, 0], [750, 350]],
+      plan: { walls: [], rooms: [], openings: [] },
+      cameras: { active: "visitor", observer: null, rows: [] },
+      selectedSavedIndex: null,
+      mapMode: "move",
+      inFlight: false,
+      queuedUpdate: false,
+      debounceTimer: null,
+      lastLocalPushAt: 0,
+      interacting: false,
+    };
+
+    const el = (id) => document.getElementById(id);
+
+    const darkMql = window.matchMedia("(prefers-color-scheme: dark)");
+    darkMql.addEventListener("change", () => drawPlanMap());
+
+    function updateRangeProgressFallback(rangeEl) {
+      if (!CSS.supports("accent-color", "auto")) {
+        const min = Number(rangeEl.min) || 0;
+        const max = Number(rangeEl.max) || 100;
+        const val = Number(rangeEl.value) || 0;
+        const pct = Math.max(0, Math.min(100, ((val - min) / (max - min || 1)) * 100));
+        rangeEl.style.setProperty("--progress", `${pct}%`);
+      }
+    }
+
+    function setStatus(text, kind = "ok") {
+      el("statusText").textContent = text;
+      el("statusDot").className = "dot" + (kind === "busy" ? " busy" : kind === "error" ? " error" : "");
+    }
+
+    function showError(msg) {
+      const b = el("errorBanner");
+      if (!msg) {
+        b.style.display = "none";
+        b.textContent = "";
+      } else {
+        b.style.display = "block";
+        b.textContent = msg;
+      }
+    }
+
+    function compassLabel(yaw) {
+      const norm = ((yaw % 360) + 540) % 360 - 180;
+      if (norm >= -22.5 && norm <= 22.5) return "S (+y)";
+      if (norm > 22.5 && norm <= 67.5) return "SW";
+      if (norm > 67.5 && norm <= 112.5) return "W (−x)";
+      if (norm > 112.5 && norm <= 157.5) return "NW";
+      if (norm < -22.5 && norm >= -67.5) return "SE";
+      if (norm < -67.5 && norm >= -112.5) return "E (+x)";
+      if (norm < -112.5 && norm >= -157.5) return "NE";
+      return "N (−y)";
+    }
+
+    function currentFloorForZ(z) {
+      if (!state.levels.length) return null;
+      let chosen = state.levels[0];
+      for (const lv of state.levels) {
+        if (z >= lv.elev - 5) chosen = lv;
+      }
+      return chosen;
+    }
+
+    function syncControlsFromState() {
+      const pairs = [
+        ["rngX", "numX", state.x],
+        ["rngY", "numY", state.y],
+        ["rngZ", "numZ", state.z],
+        ["rngYaw", "numYaw", state.yaw],
+        ["rngPitch", "numPitch", state.pitch],
+        ["rngFov", "numFov", state.fov],
+        ["rngEyeOffset", "numEyeOffset", state.eyeOffset],
+      ];
+      for (const [rId, nId, val] of pairs) {
+        const r = el(rId);
+        const n = el(nId);
+        r.value = String(val);
+        n.value = String(val);
+        updateRangeProgressFallback(r);
+      }
+
+      el("lblMetersX").textContent = `${(state.x / 100).toFixed(2)} m`;
+      el("lblMetersY").textContent = `${(state.y / 100).toFixed(2)} m`;
+      el("lblMetersZ").textContent = `${state.z >= 0 ? "+" : ""}${(state.z / 100).toFixed(2)} m`;
+      el("lblCompass").textContent = `${compassLabel(state.yaw)} · ${Math.round(state.yaw)}°`;
+      el("coordReadout").textContent =
+        `X ${Math.round(state.x)} · Y ${Math.round(state.y)} · Z ${Math.round(state.z)} cm | Yaw ${Math.round(state.yaw)}° · Pitch ${Math.round(state.pitch)}° · FOV ${Math.round(state.fov)}°`;
+
+      const isAerial = state.cameras.active === "aerial";
+      el("btnModeVisitor").classList.toggle("active", !isAerial);
+      el("btnModeAerial").classList.toggle("active", isAerial);
+
+      const lv = currentFloorForZ(state.z);
+      for (const btn of el("levelChips").querySelectorAll("button[data-level]")) {
+        btn.classList.toggle("active", Boolean(lv && btn.dataset.level === lv.id));
+      }
+      for (const btn of document.querySelectorAll("button[data-eye]")) {
+        btn.classList.toggle("active", Math.abs(state.eyeOffset - Number(btn.dataset.eye)) <= 2);
+      }
+
+      drawPlanMap();
+    }
+
+    function renderLevelChips() {
+      const box = el("levelChips");
+      box.innerHTML = "";
+      if (!state.levels.length) {
+        const span = document.createElement("span");
+        span.className = "hint";
+        span.textContent = "Single-storey project (0.00 m)";
+        box.appendChild(span);
+        return;
+      }
+      for (const lv of state.levels) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.dataset.level = lv.id;
+        btn.textContent = `${lv.name} (+${(lv.elev / 100).toFixed(2)}m)`;
+        btn.addEventListener("click", async () => {
+          state.z = Math.round(lv.elev + state.eyeOffset);
+          if (state.activeLevelId !== lv.id) {
+            await loadProjectState(lv.id, false);
+          }
+          syncControlsFromState();
+          scheduleLiveUpdate(true);
+        });
+        box.appendChild(btn);
+      }
+    }
+
+    function visibleSavedRows() {
+      return (state.cameras.rows || []).filter((r) => r[1] !== "Live Camera Control");
+    }
+
+    function renderCameraList() {
+      const box = el("camList");
+      box.innerHTML = "";
+      const rows = visibleSavedRows();
+      if (!rows.length) {
+        const p = document.createElement("p");
+        p.className = "hint";
+        p.textContent = "No saved cameras yet. Adjust sliders and click Save New View.";
+        box.appendChild(p);
+        return;
+      }
+
+      for (const r of rows) {
+        const [idx, name, x, y, z, yaw, pitch, fov] = r;
+        const item = document.createElement("div");
+        item.className = "cam-item" + (state.selectedSavedIndex === idx ? " selected" : "");
+
+        const info = document.createElement("div");
+        info.className = "cam-info";
+        info.title = "Jump to this saved camera";
+
+        const title = document.createElement("div");
+        title.className = "cam-name";
+        title.textContent = name;
+
+        const sub = document.createElement("div");
+        sub.className = "cam-coords";
+        sub.textContent = `[${Math.round(x)}, ${Math.round(y)}, ${Math.round(z)}] cm · Yaw ${Math.round(yaw)}° · Pitch ${Math.round(pitch)}° · FOV ${Math.round(fov)}°`;
+
+        info.appendChild(title);
+        info.appendChild(sub);
+        info.addEventListener("click", () => selectSavedCamera(r));
+
+        const actions = document.createElement("div");
+        actions.style.display = "flex";
+        actions.style.gap = "4px";
+
+        const btnOverwrite = document.createElement("button");
+        btnOverwrite.type = "button";
+        btnOverwrite.textContent = "Update";
+        btnOverwrite.title = "Overwrite this saved viewpoint in place";
+        btnOverwrite.addEventListener("click", () => saveCurrentView(name, idx));
+
+        const btnDel = document.createElement("button");
+        btnDel.type = "button";
+        btnDel.className = "danger";
+        btnDel.textContent = "×";
+        btnDel.title = "Delete saved viewpoint";
+        btnDel.addEventListener("click", () => deleteSavedCamera(idx));
+
+        actions.appendChild(btnOverwrite);
+        actions.appendChild(btnDel);
+
+        item.appendChild(info);
+        item.appendChild(actions);
+        box.appendChild(item);
+      }
+    }
+
+    function getMapTransform(canvas) {
+      const [[minX, minY], [maxX, maxY]] = state.bounds;
+      const pad = 90;
+      const worldW = Math.max(200, (maxX - minX) + pad * 2);
+      const worldH = Math.max(200, (maxY - minY) + pad * 2);
+      const scale = Math.min(canvas.width / worldW, canvas.height / worldH);
+      const offX = (canvas.width - worldW * scale) / 2 - (minX - pad) * scale;
+      const offY = (canvas.height - worldH * scale) / 2 - (minY - pad) * scale;
+      return {
+        scale,
+        toScreen: (wx, wy) => [wx * scale + offX, wy * scale + offY],
+        toWorld: (sx, sy) => [(sx - offX) / scale, (sy - offY) / scale],
+      };
+    }
+
+    function floorSavedPins() {
+      const activeFloor = currentFloorForZ(state.z);
+      return visibleSavedRows().filter((r) => {
+        if (!activeFloor) return true;
+        const camFloor = currentFloorForZ(r[4]);
+        return camFloor && camFloor.id === activeFloor.id;
+      });
+    }
+
+    function drawPlanMap() {
+      const canvas = el("planMap");
+      const ctx = canvas.getContext("2d");
+      const isDark = darkMql.matches;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = isDark ? "#171c26" : "#eef2f7";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const tf = getMapTransform(canvas);
+
+      for (const rm of state.plan.rooms || []) {
+        if (!Array.isArray(rm.pts) || rm.pts.length < 3) continue;
+        ctx.beginPath();
+        rm.pts.forEach(([px, py], i) => {
+          const [sx, sy] = tf.toScreen(px, py);
+          if (i === 0) ctx.moveTo(sx, sy);
+          else ctx.lineTo(sx, sy);
+        });
+        ctx.closePath();
+        ctx.fillStyle = isDark ? "#232b3a" : "#ffffff";
+        ctx.fill();
+        ctx.strokeStyle = isDark ? "#334155" : "#cbd5e1";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      for (const op of state.plan.openings || []) {
+        if (!Array.isArray(op.bounds) || op.bounds.length !== 2) continue;
+        const [[x0, y0], [x1, y1]] = op.bounds;
+        const [sx0, sy0] = tf.toScreen(x0, y0);
+        const [sx1, sy1] = tf.toScreen(x1, y1);
+        const isWin = /window/i.test(`${op.cat || ""} ${op.name || ""}`);
+        ctx.fillStyle = isWin
+          ? (isDark ? "rgba(56, 189, 248, 0.35)" : "rgba(2, 132, 199, 0.25)")
+          : (isDark ? "rgba(148, 163, 184, 0.25)" : "rgba(100, 116, 139, 0.2)");
+        ctx.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0);
+      }
+
+      for (const w of state.plan.walls || []) {
+        if (!Array.isArray(w.a) || !Array.isArray(w.b)) continue;
+        const [ax, ay] = tf.toScreen(w.a[0], w.a[1]);
+        const [bx, by] = tf.toScreen(w.b[0], w.b[1]);
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.strokeStyle = isDark ? "#cbd5e1" : "#334155";
+        ctx.lineWidth = Math.max(2.5, (w.t || 15) * tf.scale);
+        ctx.lineCap = "square";
+        ctx.stroke();
+      }
+
+      // Draw saved camera pins on this storey
+      for (const pin of floorSavedPins()) {
+        const [idx, , px, py] = pin;
+        const [sx, sy] = tf.toScreen(px, py);
+        ctx.beginPath();
+        ctx.arc(sx, sy, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = state.selectedSavedIndex === idx
+          ? (isDark ? "#4ade80" : "#15803d")
+          : (isDark ? "#94a3b8" : "#64748b");
+        ctx.fill();
+        ctx.strokeStyle = isDark ? "#0f172a" : "#ffffff";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Draw live camera FOV cone & Eye marker
+      const [cx, cy] = tf.toScreen(state.x, state.y);
+      const rad = (state.yaw * Math.PI) / 180;
+      const halfFov = ((state.fov || 75) * Math.PI) / 360;
+      const coneLen = Math.max(28, 220 * tf.scale);
+      const dirAngle = Math.atan2(Math.cos(rad), -Math.sin(rad));
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, coneLen, dirAngle - halfFov, dirAngle + halfFov);
+      ctx.closePath();
+      ctx.fillStyle = isDark ? "rgba(56, 189, 248, 0.24)" : "rgba(3, 105, 161, 0.20)";
+      ctx.fill();
+      ctx.strokeStyle = isDark ? "#38bdf8" : "#0369a1";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      const rayX = cx + (-Math.sin(rad)) * (coneLen * 0.95);
+      const rayY = cy + Math.cos(rad) * (coneLen * 0.95);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(rayX, rayY);
+      ctx.strokeStyle = isDark ? "#7dd3fc" : "#0284c7";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      ctx.fillStyle = isDark ? "#38bdf8" : "#0369a1";
+      ctx.fill();
+      ctx.strokeStyle = isDark ? "#0f172a" : "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function updateImagePreview(dataUrl) {
+      if (!dataUrl) return;
+      const img = el("previewImg");
+      img.src = dataUrl;
+      img.style.display = "block";
+      el("previewEmpty").style.display = "none";
+    }
+
+    async function loadProjectState(levelId = null, syncCamFromActive = true) {
+      setStatus("Syncing…", "busy");
+      showError("");
+      try {
+        const qs = levelId ? `?level=${encodeURIComponent(levelId)}` : "";
+        const res = await fetch(`api/state${qs}`, { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "Failed to load project state");
+
+        el("projectTitle").textContent = data.projectName || "Newera Camera Control";
+        state.levels = data.levels || [];
+        state.activeLevelId = data.planLevel;
+        state.bounds = data.bounds || [[0, 0], [750, 350]];
+        state.plan = data.plan || { walls: [], rooms: [], openings: [] };
+        state.cameras = data.cameras || { active: "visitor", observer: null, rows: [] };
+
+        const [[minX, minY], [maxX, maxY]] = state.bounds;
+        el("rngX").min = String(Math.floor(minX - 250));
+        el("rngX").max = String(Math.ceil(maxX + 250));
+        el("rngY").min = String(Math.floor(minY - 250));
+        el("rngY").max = String(Math.ceil(maxY + 250));
+
+        const maxTop = state.levels.reduce((acc, l) => Math.max(acc, l.elev + l.h + 150), 950);
+        el("rngZ").max = String(Math.ceil(maxTop));
+
+        if (syncCamFromActive && state.cameras.observer) {
+          const obs = state.cameras.observer;
+          state.x = Math.round(Number(obs.x) || 0);
+          state.y = Math.round(Number(obs.y) || 0);
+          state.z = Math.round(Number(obs.z) || 165);
+          state.yaw = Math.round(Number(obs.yaw) || 0);
+          state.pitch = Math.round(Number(obs.pitch) || 0);
+          state.fov = Math.round(Number(obs.fov) || 75);
+          const lv = currentFloorForZ(state.z);
+          if (lv) state.eyeOffset = Math.max(20, Math.round(state.z - lv.elev));
+        }
+
+        renderLevelChips();
+        renderCameraList();
+        syncControlsFromState();
+        setStatus("Connected", "ok");
+      } catch (err) {
+        setStatus("Offline", "error");
+        showError(err.message || String(err));
+      }
+    }
+
+    function scheduleLiveUpdate(immediate = false) {
+      clearTimeout(state.debounceTimer);
+      state.debounceTimer = setTimeout(() => flushLiveUpdate(), immediate ? 5 : 50);
+    }
+
+    async function flushLiveUpdate() {
+      if (state.inFlight) {
+        state.queuedUpdate = true;
+        return;
+      }
+      state.inFlight = true;
+      state.lastLocalPushAt = Date.now();
+      setStatus("Live", "busy");
+      showError("");
+      try {
+        const res = await fetch("api/camera/live", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            x: state.x,
+            y: state.y,
+            z: state.z,
+            yaw: state.yaw,
+            pitch: state.pitch,
+            fov: state.fov,
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || "Camera update failed");
+        state.lastLocalPushAt = Date.now();
+        if (data.cameras) {
+          state.cameras = data.cameras;
+          renderCameraList();
+          syncControlsFromState();
+        }
+        setStatus("Live", "ok");
+      } catch (err) {
+        setStatus("Error", "error");
+        showError(err.message || String(err));
+      } finally {
+        state.inFlight = false;
+        if (state.queuedUpdate) {
+          state.queuedUpdate = false;
+          flushLiveUpdate();
+        }
+      }
+    }
+
+    async function selectSavedCamera(row) {
+      const [idx, , x, y, z, yaw, pitch, fov] = row;
+      state.selectedSavedIndex = idx;
+      state.x = Math.round(x);
+      state.y = Math.round(y);
+      state.z = Math.round(z);
+      state.yaw = Math.round(yaw);
+      state.pitch = Math.round(pitch);
+      state.fov = Math.round(fov);
+      const lv = currentFloorForZ(state.z);
+      if (lv) {
+        state.eyeOffset = Math.max(20, Math.round(state.z - lv.elev));
+        if (state.activeLevelId !== lv.id) {
+          await loadProjectState(lv.id, false);
+        }
+      }
+      syncControlsFromState();
+      setStatus("Switching…", "busy");
+      state.lastLocalPushAt = Date.now();
+      try {
+        const res = await fetch("api/camera/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ i: idx }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        state.lastLocalPushAt = Date.now();
+        state.cameras = data.cameras;
+        renderCameraList();
+        syncControlsFromState();
+        setStatus("Live", "ok");
+      } catch (err) {
+        setStatus("Error", "error");
+        showError(err.message || String(err));
+      }
+    }
+
+    async function saveCurrentView(name, overwriteIndex = null) {
+      setStatus("Saving…", "busy");
+      state.lastLocalPushAt = Date.now();
+      try {
+        const res = await fetch("api/camera/save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            overwriteIndex,
+            x: state.x,
+            y: state.y,
+            z: state.z,
+            yaw: state.yaw,
+            pitch: state.pitch,
+            fov: state.fov,
+          }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        state.lastLocalPushAt = Date.now();
+        state.cameras = data.cameras;
+        state.selectedSavedIndex = data.savedIndex;
+        renderCameraList();
+        syncControlsFromState();
+        el("inpSaveName").value = "";
+        setStatus("Saved", "ok");
+      } catch (err) {
+        setStatus("Error", "error");
+        showError(err.message || String(err));
+      }
+    }
+
+    async function deleteSavedCamera(idx) {
+      setStatus("Deleting…", "busy");
+      state.lastLocalPushAt = Date.now();
+      try {
+        const res = await fetch("api/camera/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ i: idx }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        state.lastLocalPushAt = Date.now();
+        state.cameras = data.cameras;
+        if (state.selectedSavedIndex === idx) state.selectedSavedIndex = null;
+        renderCameraList();
+        syncControlsFromState();
+        setStatus("Deleted", "ok");
+      } catch (err) {
+        setStatus("Error", "error");
+        showError(err.message || String(err));
+      }
+    }
+
+    function bindSliderPair(rId, nId, key, onChangeExtra = null) {
+      const r = el(rId);
+      const n = el(nId);
+      const handler = (raw, immediate) => {
+        const v = Number(raw);
+        if (Number.isNaN(v)) return;
+        state[key] = v;
+        if (onChangeExtra) onChangeExtra(v);
+        syncControlsFromState();
+        scheduleLiveUpdate(immediate);
+      };
+      r.addEventListener("pointerdown", () => { state.interacting = true; });
+      r.addEventListener("pointerup", () => { state.interacting = false; });
+      r.addEventListener("input", () => handler(r.value, false));
+      n.addEventListener("change", () => handler(n.value, true));
+    }
+
+    bindSliderPair("rngX", "numX", "x");
+    bindSliderPair("rngY", "numY", "y");
+    bindSliderPair("rngZ", "numZ", "z", async (newZ) => {
+      const lv = currentFloorForZ(newZ);
+      if (lv) {
+        state.eyeOffset = Math.max(10, Math.round(newZ - lv.elev));
+        if (state.activeLevelId !== lv.id) {
+          await loadProjectState(lv.id, false);
+        }
+      }
+    });
+    bindSliderPair("rngYaw", "numYaw", "yaw");
+    bindSliderPair("rngPitch", "numPitch", "pitch");
+    bindSliderPair("rngFov", "numFov", "fov");
+    bindSliderPair("rngEyeOffset", "numEyeOffset", "eyeOffset", (offset) => {
+      const lv = currentFloorForZ(state.z);
+      state.z = Math.round((lv ? lv.elev : 0) + offset);
+    });
+
+    document.querySelectorAll("button[data-eye]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const offset = Number(btn.dataset.eye);
+        state.eyeOffset = offset;
+        const lv = currentFloorForZ(state.z);
+        state.z = Math.round((lv ? lv.elev : 0) + offset);
+        syncControlsFromState();
+        scheduleLiveUpdate(true);
+      });
+    });
+
+    // Interactive 2D Canvas Map Pointer Handling
+    const mapCanvas = el("planMap");
+    let draggingMap = false;
+
+    function applyMapPointer(ev, isDown = false) {
+      const rect = mapCanvas.getBoundingClientRect();
+      const sx = ((ev.clientX - rect.left) / rect.width) * mapCanvas.width;
+      const sy = ((ev.clientY - rect.top) / rect.height) * mapCanvas.height;
+      const tf = getMapTransform(mapCanvas);
+
+      // Click on a saved camera pin if not aiming
+      if (isDown && !ev.shiftKey && state.mapMode === "move") {
+        for (const pin of floorSavedPins()) {
+          const [psx, psy] = tf.toScreen(pin[2], pin[3]);
+          if (Math.hypot(sx - psx, sy - psy) <= 8) {
+            draggingMap = false;
+            selectSavedCamera(pin);
+            return;
+          }
+        }
+      }
+
+      const [wx, wy] = tf.toWorld(sx, sy);
+      const aim = ev.shiftKey || state.mapMode === "aim";
+      if (aim) {
+        const dx = wx - state.x;
+        const dy = wy - state.y;
+        if (Math.hypot(dx, dy) > 3) {
+          state.yaw = Math.round((Math.atan2(-dx, dy) * 180) / Math.PI);
+        }
+      } else {
+        state.x = Math.round(wx);
+        state.y = Math.round(wy);
+      }
+      syncControlsFromState();
+      scheduleLiveUpdate(false);
+    }
+
+    mapCanvas.addEventListener("pointerdown", (ev) => {
+      draggingMap = true;
+      state.interacting = true;
+      mapCanvas.setPointerCapture(ev.pointerId);
+      applyMapPointer(ev, true);
+    });
+    mapCanvas.addEventListener("pointermove", (ev) => {
+      if (!draggingMap) return;
+      applyMapPointer(ev, false);
+    });
+    mapCanvas.addEventListener("pointerup", () => {
+      draggingMap = false;
+      state.interacting = false;
+    });
+
+    el("btnMapMove").addEventListener("click", () => {
+      state.mapMode = "move";
+      el("btnMapMove").classList.add("active");
+      el("btnMapAim").classList.remove("active");
+    });
+    el("btnMapAim").addEventListener("click", () => {
+      state.mapMode = "aim";
+      el("btnMapAim").classList.add("active");
+      el("btnMapMove").classList.remove("active");
+    });
+
+    document.querySelectorAll("button[data-yaw]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.yaw = Number(btn.dataset.yaw);
+        syncControlsFromState();
+        scheduleLiveUpdate(true);
+      });
+    });
+    el("btnLevelHorizon").addEventListener("click", () => {
+      state.pitch = 0;
+      syncControlsFromState();
+      scheduleLiveUpdate(true);
+    });
+
+    function walkStep(fwdCm, rightCm, upCm = 0) {
+      const rad = (state.yaw * Math.PI) / 180;
+      const fx = -Math.sin(rad);
+      const fy = Math.cos(rad);
+      const rx = -Math.cos(rad);
+      const ry = -Math.sin(rad);
+      state.x = Math.round(state.x + fx * fwdCm + rx * rightCm);
+      state.y = Math.round(state.y + fy * fwdCm + ry * rightCm);
+      state.z = Math.max(0, Math.round(state.z + upCm));
+      const lv = currentFloorForZ(state.z);
+      if (lv) state.eyeOffset = Math.max(10, Math.round(state.z - lv.elev));
+      syncControlsFromState();
+      scheduleLiveUpdate(true);
+    }
+
+    el("nudgeFwd").addEventListener("click", () => walkStep(35, 0, 0));
+    el("nudgeBack").addEventListener("click", () => walkStep(-35, 0, 0));
+    el("nudgeLeft").addEventListener("click", () => walkStep(0, -35, 0));
+    el("nudgeRight").addEventListener("click", () => walkStep(0, 35, 0));
+    el("nudgeUp").addEventListener("click", () => walkStep(0, 0, 25));
+    el("nudgeDown").addEventListener("click", () => walkStep(0, 0, -25));
+
+    // Keyboard shortcuts when not typing in inputs
+    window.addEventListener("keydown", (ev) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+      switch (ev.key.toLowerCase()) {
+        case "w": ev.preventDefault(); walkStep(35, 0, 0); break;
+        case "s": ev.preventDefault(); walkStep(-35, 0, 0); break;
+        case "a": ev.preventDefault(); walkStep(0, -35, 0); break;
+        case "d": ev.preventDefault(); walkStep(0, 35, 0); break;
+        case "q":
+          ev.preventDefault();
+          state.yaw = ((((state.yaw + 10) % 360) + 540) % 360) - 180;
+          syncControlsFromState();
+          scheduleLiveUpdate(true);
+          break;
+        case "e":
+          ev.preventDefault();
+          state.yaw = ((((state.yaw - 10) % 360) + 540) % 360) - 180;
+          syncControlsFromState();
+          scheduleLiveUpdate(true);
+          break;
+        case "r": ev.preventDefault(); walkStep(0, 0, 15); break;
+        case "f": ev.preventDefault(); walkStep(0, 0, -15); break;
+      }
+    });
+
+    el("btnRefresh").addEventListener("click", () => loadProjectState(null, true));
+
+    el("btnModeVisitor").addEventListener("click", () => {
+      scheduleLiveUpdate(true);
+    });
+
+    el("btnModeAerial").addEventListener("click", async () => {
+      setStatus("Aerial…", "busy");
+      state.lastLocalPushAt = Date.now();
+      try {
+        const res = await fetch("api/camera/select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "aerial" }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        state.lastLocalPushAt = Date.now();
+        state.cameras = data.cameras;
+        renderCameraList();
+        syncControlsFromState();
+        setStatus("Aerial", "ok");
+      } catch (err) {
+        setStatus("Error", "error");
+        showError(err.message || String(err));
+      }
+    });
+
+    el("btnSaveNew").addEventListener("click", () => {
+      const name = el("inpSaveName").value.trim() || `Floor View (${Math.round(state.z)}cm)`;
+      saveCurrentView(name, null);
+    });
+
+    el("btnSnapshot").addEventListener("click", async () => {
+      const btn = el("btnSnapshot");
+      btn.disabled = true;
+      setStatus("Rendering 3D…", "busy");
+      showError("");
+      try {
+        const res = await fetch("api/camera/preview", { method: "POST" });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        if (data.image) updateImagePreview(data.image);
+        setStatus("Connected", "ok");
+      } catch (err) {
+        setStatus("Error", "error");
+        showError(err.message || String(err));
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    el("btnPhoto").addEventListener("click", async () => {
+      const btn = el("btnPhoto");
+      btn.disabled = true;
+      setStatus("Rendering photo…", "busy");
+      showError("");
+      try {
+        const res = await fetch("api/camera/photo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quality: "draft", hour: 10.5 }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error);
+        if (data.image) updateImagePreview(data.image);
+        setStatus("Photo Ready", "ok");
+      } catch (err) {
+        setStatus("Error", "error");
+        showError(err.message || String(err));
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // Live SSE sync from Newera (ignored while dragging or within 600ms of local push)
+    function connectEvents() {
+      const es = new EventSource("api/events");
+      es.addEventListener("revision", () => {
+        if (state.interacting || state.inFlight || Date.now() - state.lastLocalPushAt < 600) {
+          return;
+        }
+        loadProjectState(state.activeLevelId, true);
+      });
+    }
+
+    (async () => {
+      await loadProjectState(null, true);
+      const lv = currentFloorForZ(state.z);
+      if (lv && lv.id !== state.activeLevelId) {
+        await loadProjectState(lv.id, false);
+      }
+      connectEvents();
+    })();
+  </script>
+</body>
+</html>
